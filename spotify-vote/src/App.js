@@ -3,14 +3,15 @@ import './App.css';
 import axios from 'axios';
 
 function App() {
-    const CLIENT_ID = "b39c9c2f4fa346a69e4cdbcafefd5185"
-    const REDIRECT_URI = "http://localhost:3001"
+    const CLIENT_ID = "dbf88f9cef4f4ce6ab5486db9b0400ba"
+    const REDIRECT_URI = "http://localhost:3000"
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
 
     const [token, setToken] = useState("")
     const [searchKey, setSearchKey] = useState("")
     const [artists, setArtists] = useState([])
+    const [tracks, setTracks] = useState([])
 
     // const getToken = () => {
     //     let urlParams = new URLSearchParams(window.location.hash.replace("#","?"));
@@ -56,18 +57,40 @@ function App() {
     }
 
     const renderArtists = () => {
-        return artists.map(artist => (
+        return artists.map((artist, index) => (
             <div key={artist.id}>
                 {artist.images.length ? <img width={"100%"} src={artist.images[0].url} alt=""/> : <div>No Image</div>}
-                {artist.name}
+                <button key={artist.id} onClick={(e) => handleArtistButtonClick(e, index)}>{artist.name}</button>
             </div>
         ))
     }
 
+    const handleArtistButtonClick = (e, index) => {
+      const artistId = artists[index].id;
+      getArtistTracks(e, artistId);
+  };
+
+    const getArtistTracks = async (e, artistId) => {
+      try {
+        const {data} = await axios.get(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            
+        });
+        setTracks(data.tracks)
+        console.log(data.tracks);
+
+        // Do something with the data, e.g., display the top tracks
+    } catch (error) {
+        console.error('Error fetching top tracks:', error);
+    }
+  }
+
     return (
         <div className="App">
             <header className="App-header">
-                <h1>Spotify Vote</h1>
+                <h1>Spotify React</h1>
                 {!token ?
                     <a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}`}>Login
                         to Spotify</a>
