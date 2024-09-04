@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import "./App.css";
+import "./styles/App.css";
 import axios from "axios";
 import ArtistList from "./components/ArtistList";
 import AlbumList from "./components/AlbumList";
 import TrackList from "./components/TrackList";
+import Overlay from "./components/Overlay";
 
 function App() {
   const CLIENT_ID = "dbf88f9cef4f4ce6ab5486db9b0400ba";
@@ -17,6 +18,10 @@ function App() {
   const [tracks, setTracks] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [view, setView] = useState("main");
+  const [isOverlayOpen, setOverlayOpen] = useState(false);
+
+  const openOverlay = () => setOverlayOpen(true);
+  const closeOverlay = () => setOverlayOpen(false);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -56,68 +61,19 @@ function App() {
     setArtists(data.artists.items);
   };
 
-  // const renderArtists = () => {
-  //   const artistMap = artists.map((artist, index) => (
-  //     <div key={artist.id}>
-  //       {artist.images.length ? (
-  //         <a
-  //           href={`https://open.spotify.com/artist/${artist.id}`}
-  //           target="_blank"
-  //           rel="noreferrer"
-  //         >
-  //           <img width={"100%"} src={artist.images[0].url} alt="" />
-  //         </a>
-  //       ) : (
-  //         <div>No Image</div>
-  //       )}
-  //       <button
-  //         key={artist.id}
-  //         onClick={(e) => handleArtistButtonClick(e, index)}
-  //       >
-  //         {artist.name}
-  //       </button>
-  //     </div>
-  //   ));
-  // };
+  const searchTracks = async (e) => {
+    e.preventDefault();
+    const { data } = await axios.get("https://api.spotify.com/v1/search", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        q: searchKey,
+        type: "track",
+      },
+    });
 
-  // const renderTracks = () => {
-  //   return tracks.map((track, index) => (
-  //     <div key={track.id}>
-  //       <button key={track.id}>{track.name}</button>
-  //     </div>
-  //   ));
-  // };
-
-  // const renderAlbums = () => {
-  //   return albums.map((album, index) => (
-  //     <div key={album.id}>
-  //       {album.images.length ? (
-  //         <a
-  //           href={`https://open.spotify.com/album/${album.id}`}
-  //           target="_blank"
-  //           rel="noreferrer"
-  //         >
-  //           <img width={"100%"} src={album.images[0].url} alt="" />
-  //         </a>
-  //       ) : (
-  //         <div>No Image</div>
-  //       )}
-  //       <button
-  //         key={album.id}
-  //         onClick={(e) => handleArtistButtonClick(e, index)}
-  //       >
-  //         {album.name}
-  //       </button>
-  //     </div>
-  //   ));
-  // };
-
-  const showArtistSelection = () => {
-    setView("artist");
-  };
-
-  const showMainPage = () => {
-    setView("main");
+    setTracks(data.tracks.items);
   };
 
   const handleArtistButtonClick = (index) => {
@@ -171,15 +127,35 @@ function App() {
         ) : (
           <button onClick={logout}>Logout</button>
         )}
+      </header>
+      <body>
         {token ? (
-          <form onSubmit={searchArtists}>
-            <input type="text" onChange={(e) => setSearchKey(e.target.value)} />
-            <button type={"submit"}>Search</button>
-          </form>
+          <>
+            <form onSubmit={searchArtists}>
+              <input
+                type="text"
+                placeholder="Search for Artists"
+                onChange={(e) => setSearchKey(e.target.value)}
+              />
+              <button type={"submit"}>Search</button>
+            </form>
+            <form onSubmit={searchTracks}>
+              <input
+                type="text"
+                placeholder="Search for Tracks"
+                onChange={(e) => setSearchKey(e.target.value)}
+              />
+              <button type={"submit"}>Search</button>
+            </form>
+          </>
         ) : (
           <h2>Please login</h2>
         )}
-      </header>
+        <div>
+          <button onClick={openOverlay}>Open Overlay</button>
+          <Overlay isOpen={isOverlayOpen} onClose={closeOverlay} />
+        </div>
+      </body>
       <ArtistList
         artists={artists}
         onArtistClick={(index) => handleArtistButtonClick(index)}
